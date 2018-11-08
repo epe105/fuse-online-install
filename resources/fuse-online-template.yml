@@ -1,29 +1,27 @@
 #
 # Do not edit, this is a generated file.  To regenerate,  run: ./generator/run.sh
 #
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: syndesis-fuse-ignite-1.3
+  name: fuse-ignite-1.4
 #
 # Template flavor:
 #
 # Allow localhost refs: false
 # Use docker images: false
-# Syndesis Tag: 1.3
+# Syndesis Tag: 1.4
 # Prometheus Tag: v2.1.0
 # Postgresql Tag: 9.5
 # OAuthProxy Tag: v1.1.0
 #
   labels:
+    app: syndesis
     syndesis.io/app: syndesis
     syndesis.io/type: infrastructure
 parameters:
-# Parameters with no defaults (has to be be provided when template is applied):
 - name: ROUTE_HOSTNAME
   description: The external hostname to access Syndesis
-  required: true
-# Parameters with defaults:
 - name: OPENSHIFT_MASTER
   description: Public OpenShift master address
   value: https://localhost:8443
@@ -137,6 +135,11 @@ parameters:
   name: MAX_INTEGRATIONS_PER_USER
   value: "1"
   required: true
+- description: Interval for checking the state of the integrations.
+  displayName: Integration state check interval
+  name: INTEGRATION_STATE_CHECK_INTERVAL
+  value: "60"
+  required: true
 - description: Key used to perform authentication of client side stored state.
   displayName: Client side state authentication key
   from: '[a-zA-Z0-9]{32}'
@@ -158,6 +161,7 @@ objects:
   metadata:
     name: syndesis-oauth-proxy-cookie-secret
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   stringData:
@@ -167,6 +171,7 @@ objects:
   metadata:
     name: syndesis-server-secret
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   stringData:
@@ -177,10 +182,11 @@ objects:
   metadata:
     name: syndesis-global-config
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   stringData:
-    syndesis: "1.3"
+    syndesis: "1.4"
     postgresql: "9.5"
     oauthproxy: "v1.1.0"
     prometheus: "v2.1.0"
@@ -210,6 +216,7 @@ objects:
   metadata:
     name: syndesis-ui
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-ui
@@ -219,12 +226,14 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-ui
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-ui
@@ -232,6 +241,7 @@ objects:
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-ui
     strategy:
@@ -250,6 +260,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/type: infrastructure
           syndesis.io/component: syndesis-ui
@@ -291,7 +302,7 @@ objects:
         - syndesis-ui
         from:
           kind: ImageStreamTag
-          name: fuse-ignite-ui:1.3
+          name: fuse-ignite-ui:1.4
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -301,6 +312,7 @@ objects:
   metadata:
     name: syndesis-ui-config
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-ui
@@ -333,11 +345,12 @@ objects:
           "productBuild": true
        }
       }
-- apiVersion: v1
+- apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
     name: jboss-amq-63
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: amq
   spec:
@@ -366,16 +379,18 @@ objects:
       targetPort: 61613
     selector:
       syndesis.io/example: broker-amq
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/example: broker-amq
     name: broker-amq
   spec:
     replicas: 0
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/example: broker-amq
     strategy:
@@ -383,6 +398,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/example: broker-amq
         name: broker-amq
@@ -430,6 +446,7 @@ objects:
   kind: ConfigMap
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-db
@@ -492,10 +509,32 @@ objects:
       /var/lib/pgsql/sampledb/add-sample-db.sh &>  /proc/1/fd/1
 
 - apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    labels:
+      app: syndesis
+      syndesis.io/app: syndesis
+      syndesis.io/type: infrastructure
+      syndesis.io/component: syndesis-db
+    name: syndesis-db-conf
+  data:
+    syndesis-postgresql.conf: |
+      log_autovacuum_min_duration = 0
+      autovacuum_max_workers = 6
+      autovacuum_naptime = 15s
+      autovacuum_vacuum_threshold = 25
+      autovacuum_vacuum_scale_factor = 0.1
+      autovacuum_analyze_threshold = 10
+      autovacuum_analyze_scale_factor = 0.05
+      autovacuum_vacuum_cost_delay = 10ms
+      autovacuum_vacuum_cost_limit = 1000
+
+- apiVersion: v1
   kind: Service
   metadata:
     name: syndesis-db
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-db
@@ -507,6 +546,7 @@ objects:
       protocol: TCP
       targetPort: 5432
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-db
     sessionAffinity: None
@@ -518,7 +558,9 @@ objects:
   metadata:
     name: syndesis-db
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
+      syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-db
   spec:
     accessModes:
@@ -526,17 +568,20 @@ objects:
     resources:
       requests:
         storage: ${POSTGRESQL_VOLUME_CAPACITY}
-- apiVersion: v1
+
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     name: syndesis-db
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-db
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-db
     strategy:
@@ -549,6 +594,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/component: syndesis-db
       spec:
@@ -600,6 +646,8 @@ objects:
             name: syndesis-db-data
           - mountPath: /var/lib/pgsql/sampledb
             name: syndesis-sampledb-config
+          - mountPath: /opt/app-root/src/postgresql-cfg/
+            name: syndesis-db-conf
         volumes:
         - name: syndesis-db-data
           persistentVolumeClaim:
@@ -608,6 +656,9 @@ objects:
             defaultMode: 511
             name: syndesis-sampledb-config
           name: syndesis-sampledb-config
+        - configMap:
+            name: syndesis-db-conf
+          name: syndesis-db-conf
     triggers:
     - imageChangeParams:
         automatic: true
@@ -623,6 +674,7 @@ objects:
   kind: Service
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-meta
@@ -633,6 +685,7 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-meta
 - apiVersion: v1
@@ -640,6 +693,7 @@ objects:
   metadata:
     name: syndesis-meta
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-meta
@@ -649,10 +703,11 @@ objects:
     resources:
       requests:
         storage: ${META_VOLUME_CAPACITY}
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-meta
@@ -660,6 +715,7 @@ objects:
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-meta
     strategy:
@@ -672,6 +728,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/type: infrastructure
           syndesis.io/component: syndesis-meta
@@ -739,7 +796,7 @@ objects:
         - syndesis-meta
         from:
           kind: ImageStreamTag
-          name: fuse-ignite-meta:1.3
+          name: fuse-ignite-meta:1.4
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -749,6 +806,7 @@ objects:
   kind: ConfigMap
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-meta
@@ -771,6 +829,7 @@ objects:
   kind: Service
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-oauthproxy
@@ -783,14 +842,18 @@ objects:
       protocol: TCP
       targetPort: 8443
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-oauthproxy
-- apiVersion: v1
+- apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
+    annotations:
+      console.alpha.openshift.io/overview-app-route: "true"
     name: syndesis
   spec:
     host: ${ROUTE_HOSTNAME}
@@ -802,10 +865,11 @@ objects:
     to:
       kind: Service
       name: syndesis-oauthproxy
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-oauthproxy
@@ -813,6 +877,7 @@ objects:
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-oauthproxy
     strategy:
@@ -825,6 +890,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/type: infrastructure
           syndesis.io/component: syndesis-oauthproxy
@@ -844,9 +910,12 @@ objects:
             - --cookie-secret=$(OAUTH_COOKIE_SECRET)
             - --pass-access-token
             - --skip-provider-button
+            - --skip-auth-regex=/logout
+            - --skip-auth-regex=/[^/]+\.(png|jpg|eot|svg|ttf|woff|woff2)
             - --skip-auth-regex=/api/v1/swagger.*
             - --skip-auth-regex=/api/v1/index.html
             - --skip-auth-regex=/api/v1/credentials/callback
+            - --skip-auth-regex=/api/v1/version
             - --skip-auth-preflight
             - --openshift-ca=/etc/pki/tls/certs/ca-bundle.crt
             - --openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -907,6 +976,7 @@ objects:
   metadata:
     name: syndesis-server
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-server
@@ -915,6 +985,7 @@ objects:
   metadata:
     name: syndesis-integration
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-server
@@ -922,6 +993,7 @@ objects:
   kind: Service
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-server
@@ -932,12 +1004,14 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-server
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-server
@@ -945,6 +1019,7 @@ objects:
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-server
     strategy:
@@ -957,6 +1032,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/type: infrastructure
           syndesis.io/component: syndesis-server
@@ -997,6 +1073,8 @@ objects:
             value: "1"
           - name: MAX_INTEGRATIONS_PER_USER
             value: ${MAX_INTEGRATIONS_PER_USER}
+          - name: INTEGRATION_STATE_CHECK_INTERVAL
+            value: ${INTEGRATION_STATE_CHECK_INTERVAL}
           image: ' '
 
           imagePullPolicy: IfNotPresent
@@ -1045,7 +1123,7 @@ objects:
         - syndesis-server
         from:
           kind: ImageStreamTag
-          name: fuse-ignite-server:1.3
+          name: fuse-ignite-server:1.4
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: ImageChange
 
@@ -1057,6 +1135,7 @@ objects:
     annotations:
       io.syndesis/upgrade-mode: keep
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-server
@@ -1095,16 +1174,21 @@ objects:
           sensitive: false
         jsondb:
           enabled: true
+      monitoring:
+        kind: default
+      features:
+        monitoring:
+          enabled: true
       maven:
         repositories:
           01_maven_central: https://repo1.maven.org/maven2
-          02_redhat: https://maven.repository.redhat.com/ga/
-          03_jboss: https://repository.jboss.org/
+          02_redhat_ea_repository: https://maven.repository.redhat.com/ga/
+          03_jboss_ea: https://repository.jboss.org/
       openshift:
         apiBaseUrl: ${OPENSHIFT_MASTER}/oapi/v1
         namespace: ${NAMESPACE}
         imageStreamNamespace: ${IMAGE_STREAM_NAMESPACE}
-        builderImageStreamTag: fuse-ignite-s2i:1.3
+        builderImageStreamTag: fuse-ignite-s2i:1.4
         deploymentMemoryRequestMi: 200
         deploymentMemoryLimitMi: 512
         mavenOptions: "-XX:+UseG1GC -XX:+UseStringDeduplication -Xmx310m"
@@ -1113,10 +1197,12 @@ objects:
       controllers:
         maxIntegrationsPerUser: ${MAX_INTEGRATIONS_PER_USER}
         maxDeploymentsPerUser: ${MAX_INTEGRATIONS_PER_USER}
+        integrationStateCheckInterval: ${INTEGRATION_STATE_CHECK_INTERVAL}
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: todo
       syndesis.io/component: todo
     name: todo
@@ -1126,13 +1212,15 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
+      app: syndesis
       syndesis.io/app: todo
       syndesis.io/component: todo
 
-- apiVersion: v1
+- apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: todo
       syndesis.io/component: todo
     name: todo
@@ -1149,10 +1237,11 @@ objects:
       name: todo
       weight: 100
 
-- apiVersion: v1
+- apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: todo
     name: todo
   spec:
@@ -1163,10 +1252,11 @@ objects:
       - items:
         tag: latest
 
-- apiVersion: v1
+- apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: todo
     name: todo
   spec:
@@ -1193,15 +1283,17 @@ objects:
       - imageChange:
         type: ImageChange
 
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: todo
     name: todo
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: todo
       syndesis.io/component: todo
     strategy:
@@ -1217,6 +1309,7 @@ objects:
           openshift.io/container.todo.image.entrypoint: '["container-entrypoint","/bin/sh","-c","$STI_SCRIPTS_PATH/usage"]'
         creationTimestamp: null
         labels:
+          app: syndesis
           syndesis.io/app: todo
           syndesis.io/component: todo
       spec:
@@ -1260,11 +1353,12 @@ objects:
             kind: ImageStreamTag
             name: todo:latest
         type: ImageChange
-- apiVersion: v1
+- apiVersion: authorization.openshift.io/v1
   kind: RoleBinding
   metadata:
     name: syndesis:editors
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   roleRef:
@@ -1272,11 +1366,12 @@ objects:
   subjects:
   - kind: ServiceAccount
     name: syndesis-server
-- apiVersion: v1
+- apiVersion: authorization.openshift.io/v1
   kind: RoleBinding
   metadata:
     name: syndesis:viewers
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
   roleRef:
@@ -1289,6 +1384,7 @@ objects:
   metadata:
     name: syndesis-prometheus
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-prometheus
@@ -1297,6 +1393,7 @@ objects:
   kind: ConfigMap
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-prometheus
@@ -1385,6 +1482,7 @@ objects:
   metadata:
     name: syndesis-prometheus
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-prometheus
@@ -1395,6 +1493,7 @@ objects:
       protocol: TCP
       targetPort: 9090
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-prometheus
   status:
@@ -1404,6 +1503,7 @@ objects:
   metadata:
     name: syndesis-prometheus
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-prometheus
@@ -1413,17 +1513,19 @@ objects:
     resources:
       requests:
         storage: ${PROMETHEUS_VOLUME_CAPACITY}
-- apiVersion: v1
+- apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     name: syndesis-prometheus
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
       syndesis.io/component: syndesis-prometheus
   spec:
     replicas: 1
     selector:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/component: syndesis-prometheus
     strategy:
@@ -1436,6 +1538,7 @@ objects:
     template:
       metadata:
         labels:
+          app: syndesis
           syndesis.io/app: syndesis
           syndesis.io/type: infrastructure
           syndesis.io/component: syndesis-prometheus
@@ -1452,11 +1555,13 @@ objects:
           livenessProbe:
             httpGet:
               port: 9090
+            initialDelaySeconds: 60
           ports:
           - containerPort: 9090
           readinessProbe:
             httpGet:
               port: 9090
+            initialDelaySeconds: 30
           # DB QoS class is "Guaranteed" (requests == limits)
           # Note: On OSO there is no Guaranteed class, its always burstable
           resources:
@@ -1488,10 +1593,11 @@ objects:
       type: ImageChange
 
     - type: ConfigChange
-- apiVersion: v1
+- apiVersion: template.openshift.io/v1
   kind: Template
   metadata:
     labels:
+      app: syndesis
       syndesis.io/app: syndesis
       syndesis.io/type: infrastructure
     name: syndesis-upgrade
@@ -1509,12 +1615,9 @@ objects:
       openshift.io/documentation-url: "https://syndesis.io"
       openshift.io/support-url: "https://access.redhat.com"
   parameters:
-  - name: OC_LOGIN
-    description: '"oc login" command to connect to syndesis. Paste the login line from "Command Line Tools" section in you OpenShift console'
-    required: true
-  - name: SYNDESIS_VERSION
-    description: 'The version to upgrade to or "latest" for the newest version'
-    value: latest
+  - name: UPGRADE_REGISTRY
+    description: 'Registry from where to pick up the upgrade pod'
+    value: docker.io
     required: true
   message: |-
     Syndesis upgrade process started
@@ -1522,11 +1625,12 @@ objects:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: syndesis-upgrade-${SYNDESIS_VERSION}
+      name: syndesis-upgrade-1.1-10
     spec:
+      serviceAccountName: syndesis-operator
       containers:
       - name: upgrade
-        image: registry.access.redhat.com/fuse7/fuse-ignite-upgrade:${SYNDESIS_VERSION}
+        image: ${UPGRADE_REGISTRY}/fuse7/fuse-ignite-upgrade:1.1-10
         env:
           - name: SYNDESIS_UPGRADE_PROJECT
             valueFrom:
@@ -1536,8 +1640,6 @@ objects:
         args:
           - "--backup"
           - "/opt/backup"
-          - "--oc-login"
-          - "${OC_LOGIN}"
         volumeMounts:
         - mountPath: /opt/backup
           subPath: backup
