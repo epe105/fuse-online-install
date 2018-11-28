@@ -255,10 +255,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: "250m"
       type: Rolling
     template:
       metadata:
@@ -292,10 +290,8 @@ objects:
           resources:
             limits:
               memory: 255Mi
-              cpu: 450m
             requests:
               memory: 50Mi
-              cpu: 250m
         volumes:
         - configMap:
             name: syndesis-ui-config
@@ -596,10 +592,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: "250m"
     template:
       metadata:
         labels:
@@ -732,10 +726,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: "250m"
       type: Recreate
     template:
       metadata:
@@ -785,10 +777,8 @@ objects:
           resources:
             limits:
               memory: ${META_MEMORY_LIMIT}
-              cpu: 750m
             requests:
               memory: 256Mi
-              cpu: 450m
           # spring-boot automatically picks up application.yml from ./config
           workingDir: /deployments
           volumeMounts:
@@ -899,10 +889,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: "250m"
       type: Recreate
     template:
       metadata:
@@ -969,10 +957,8 @@ objects:
           resources:
             limits:
               memory: 200Mi
-              cpu: "450m"
             requests:
               memory: 20Mi
-              cpu: "250m"
         serviceAccountName: syndesis-oauth-client
         volumes:
         - name: syndesis-oauthproxy-tls
@@ -1046,10 +1032,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "750m"
         requests:
           memory: "20Mi"
-          cpu: "450m"
       type: Recreate
     template:
       metadata:
@@ -1325,10 +1309,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: "250m"
       type: Recreate
     template:
       metadata:
@@ -1356,10 +1338,8 @@ objects:
             resources:
               limits:
                 memory: 256Mi
-                cpu: 450m
               requests:
                 memory: 256Mi
-                cpu: 250m
             ports:
               - containerPort: 8080
                 name: http
@@ -1563,10 +1543,8 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "450m"
         requests:
           memory: "20Mi"
-          cpu: 250m"
     template:
       metadata:
         labels:
