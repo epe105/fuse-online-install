@@ -255,7 +255,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: "250m"
@@ -292,7 +292,7 @@ objects:
           resources:
             limits:
               memory: 255Mi
-              cpu: 1000m
+              cpu: 1
             requests:
               memory: 50Mi
               cpu: 250m
@@ -596,7 +596,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: "250m"
@@ -732,7 +732,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: "250m"
@@ -899,7 +899,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: "250m"
@@ -969,7 +969,7 @@ objects:
           resources:
             limits:
               memory: 200Mi
-              cpu: "1000m"
+              cpu: "1"
             requests:
               memory: 20Mi
               cpu: "250m"
@@ -1325,7 +1325,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: "250m"
@@ -1356,7 +1356,7 @@ objects:
             resources:
               limits:
                 memory: 256Mi
-                cpu: 1000m
+                cpu: 1
               requests:
                 memory: 256Mi
                 cpu: 250m
@@ -1563,7 +1563,7 @@ objects:
       resources:
         limits:
           memory: "256Mi"
-          cpu: "1000m"
+          cpu: "1"
         requests:
           memory: "20Mi"
           cpu: 250m"
